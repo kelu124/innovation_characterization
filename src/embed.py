@@ -7,18 +7,22 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import CacheBackedEmbeddings
 
 
-underlying_embeddings = OpenAIEmbeddings()
-store = LocalFileStore("./cache/")
-
-cached_embedder = CacheBackedEmbeddings.from_bytes_store(
-    underlying_embeddings, store, namespace=underlying_embeddings.model
-)
-
-
-
 # to create a new file named vectorstore in your current directory.
 def load_db():
-    embeddings=OpenAIEmbeddings()
-    DB_FAISS_PATH = './.cache/faiss_index'
-    db = FAISS.load_local(DB_FAISS_PATH, embeddings, allow_dangerous_deserialization= True)
-    return db
+    store = LocalFileStore("./.cache/embeds/")
+    embeddings = OpenAIEmbeddings()
+
+    cached_embedder = CacheBackedEmbeddings.from_bytes_store(
+        embeddings, store, namespace=embeddings.model
+    )
+    
+    DB_FAISS_PATH = "./.cache/faiss_index"
+    db = FAISS.load_local(
+        DB_FAISS_PATH, cached_embedder, allow_dangerous_deserialization=True
+    )
+    return db, cached_embedder
+
+def save_db(db):
+    DB_FAISS_PATH = "./.cache/faiss_index"
+    db.save_local(DB_FAISS_PATH)
+    return "saved at "+DB_FAISS_PATH
